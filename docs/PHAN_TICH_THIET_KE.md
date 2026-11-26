@@ -138,6 +138,7 @@ service (409). Mã trạng thái đúng từ điển `NGHIEP_VU.md` mục 14.
 
 ## 6. API từng service (bản nháp, qua gateway `/api/v1`)
 
+Tiền tố đường dẫn của mỗi service không trùng nhau (gateway định tuyến theo tiền tố dài nhất, `gateway/routes.json`): execution dùng `/executions` cho hợp đồng đang thực hiện, `/contracts` là của contract.
 Chi tiết trong `service/openapi.yaml` của từng repo; mỗi service ≥ 4 endpoint, ≥ 1 lỗi nghiệp vụ
 4xx có `code` (MS-R3). Lỗi theo RFC 9457. Danh sách, lọc, nhập, xuất của bảng dữ liệu đơn giản dùng
 CRUD chung `/resources/<collection>` của chassis (`MODULES.md`); bảng dưới là nghiệp vụ riêng.
@@ -160,7 +161,7 @@ CRUD chung `/resources/<collection>` của chassis (`MODULES.md`); bảng dướ
 | signing | `GET /signing-sessions/{id}` | 200 | 404 |
 | signing | `POST /signing-sessions/{id}/steps/{n}/sign` (`Idempotency-Key`) | 200 `SIGNED` / 202 `PENDING_PROVIDER` | 409, 403 BR-A09 |
 | execution | `POST /contract-imports` (gói hợp đồng, S2) | 201 | 409 `ALREADY_IMPORTED`, 422 `PACKAGE_INVALID` |
-| execution | `GET /contracts/{id}/milestones`, `GET /milestones/{id}` (kèm `pending`) | 200 | 404 |
+| execution | `GET /executions`, `GET /executions/{contractId}` (hợp đồng đang thực hiện kèm mốc), `GET /milestones/{id}` (kèm `pending`) | 200 | 404 |
 | execution | `POST /milestones/{id}/evidence` | 201 | 403 BR-B03, 409 BR-B08, BR-B11 |
 | execution | `POST /milestones/{id}/approvals`, `/rejections` | 201 | 409, 403 BR-B05 |
 | execution | `POST /milestones/{id}/disputes`, `POST /disputes/{id}/resolution` | 201/200 | 409, 403 BR-B09 |

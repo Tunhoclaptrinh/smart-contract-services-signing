@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scw:event-envelope:v1",
+  "title": "Event envelope v1 (draft: TV6 and the team lead settle it by 28/11)",
+  "description": "Every event between services travels in this envelope. Consumers deduplicate by id; audit stores every type without knowing it.",
+  "type": "object",
+  "required": [
+    "id",
+    "type",
+    "version",
+    "occurredAt",
+    "source",
+    "organizationId",
+    "subject",
+    "data"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "id": {
+      "type": "string",
+      "format": "uuid",
+      "description": "Unique per event; the idempotency key of consumers"
+    },
+    "type": {
+      "type": "string",
+      "pattern": "^[a-z]+(_[a-z]+)*\\.[a-z]+(_[a-z]+)*$",
+      "examples": ["contract.activated"]
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version of the data shape of this type"
+    },
+    "occurredAt": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "string",
+      "enum": [
+        "identity",
+        "contract",
+        "signing",
+        "execution",
+        "decision",
+        "payment",
+        "audit"
+      ]
+    },
+    "organizationId": { "type": "string" },
+    "actor": {
+      "type": ["object", "null"],
+      "required": ["id", "role"],
+      "properties": {
+        "id": { "type": "string" },
+        "role": { "type": "string" },
+        "organizationId": { "type": "string" }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "required": ["resource", "id"],
+      "properties": {
+        "resource": { "type": "string" },
+        "id": { "type": "string" }
+      }
+    },
+    "requestId": {
+      "type": ["string", "null"],
+      "description": "x-request-id of the request that caused it"
+    },
+    "data": {
+      "type": "object",
+      "description": "Type-specific body (events.json lists each type)"
+    }
+  }
+}

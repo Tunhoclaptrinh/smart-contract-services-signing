@@ -35,6 +35,57 @@ export interface CallOptions {
 }
 
 const IDEMPOTENT = new Set(["GET", "HEAD", "PUT", "DELETE", "OPTIONS"]);
+
+/**
+ * Protection for calls to a dependency that may be slow or down (a bank, a signing provider).
+ * Circuit breaker: after `failures` infrastructure failures within `windowMs`, calls fail fast with
+ * 503 `UPSTREAM_CIRCUIT_OPEN` for `openMs`, then one trial call decides (half-open). Business answers
+ * (4xx) never count as failures. Bulkhead: at most `maxConcurrent` calls in flight, the next ones get
+ * 503 `UPSTREAM_BUSY` instead of queueing behind a slow target.
+ */
+export interface Protection {
+  breaker?: { failures?: number; windowMs?: number; openMs?: number };
+  maxConcurrent?: number;
+}
+type Defaults = { timeoutMs?: number; retries?: number } & Protection;
+
+export class CircuitBreaker {
+  private failures: number[] = [];
+  private openUntil = 0;
+  private trial = false;
+  constructor(
+    private limit = 5,
+    private windowMs = 10_000,
+    private openMs = 10_000,
+  ) {}
+  get state(): "closed" | "open" | "half-open" {
+    if (this.openUntil === 0) return "closed";
+    return Date.now() < this.openUntil ? "open" : "half-open";
+  }
+  /** Whether a call may go out now. */
+  allow() {
+    const state = this.state;
+    if (state === "closed") return true;
+    if (state === "open" || this.trial) return false;
+    this.trial = true;
+    return true;
+  }
+  success() {
+    this.failures = [];
+    this.openUntil = 0;
+    this.trial = false;
+  }
+  failure(now = Date.now()) {
+    if (this.trial || this.state === "half-open") {
+      this.trial = false;
+      this.openUntil = now + this.openMs;
+      return;
+    }
+    this.failures = this.failures.filter((t) => now - t < this.windowMs);
+    this.failures.push(now);
+    if (this.failures.length >= this.limit) this.openUntil = now + this.openMs;
+  }
+}
 const sleep = (ms: number) => new Promise((done) => setTimeout(done, ms));
 
 export class ServiceClient {
@@ -43,14 +94,18 @@ export class ServiceClient {
     readonly target: string,
     /** Base URL ending before `/api/v1`, e.g. process.env.CONTRACT_URL. */
     private baseUrl: string | undefined,
-    private defaults: { timeoutMs?: number; retries?: number } = {},
-  ) {}
+    private defaults: Defaults = {},
+  ) {
+    const b = defaults.breaker;
+    this.breaker = b
+      ? new CircuitBreaker(b.failures, b.windowMs, b.openMs)
+      : undefined;
+  }
+  readonly breaker?: CircuitBreaker;
+  private inFlight = 0;
 
   /** Client for `<NAME>_URL`, e.g. `ServiceClient.fromEnv("contract")` reads CONTRACT_URL. */
-  static fromEnv(
-    target: string,
-    defaults?: { timeoutMs?: number; retries?: number },
-  ) {
+  static fromEnv(target: string, defaults?: Defaults) {
     const variable = `${target.toUpperCase().replace(/-/g, "_")}_URL`;
     return new ServiceClient(target, process.env[variable], defaults);
   }
@@ -72,6 +127,33 @@ export class ServiceClient {
     method: string,
     path: string,
     options: CallOptions = {},
+  ): Promise<T> {
+    if (this.breaker && !this.breaker.allow())
+      throw new ServiceUnavailableException(
+        `UPSTREAM_CIRCUIT_OPEN:${this.target}`,
+      );
+    const max = this.defaults.maxConcurrent;
+    if (max !== undefined && this.inFlight >= max)
+      throw new ServiceUnavailableException(`UPSTREAM_BUSY:${this.target}`);
+    this.inFlight++;
+    try {
+      const result = await this.send<T>(method, path, options);
+      this.breaker?.success();
+      return result;
+    } catch (error) {
+      const status = error instanceof HttpException ? error.getStatus() : 500;
+      if (status >= 500) this.breaker?.failure();
+      else this.breaker?.success();
+      throw error;
+    } finally {
+      this.inFlight--;
+    }
+  }
+
+  private async send<T>(
+    method: string,
+    path: string,
+    options: CallOptions,
   ): Promise<T> {
     if (!this.baseUrl)
       throw new ServiceUnavailableException(

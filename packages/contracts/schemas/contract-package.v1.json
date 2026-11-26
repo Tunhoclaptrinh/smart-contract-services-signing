@@ -1,0 +1,153 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "scw:contract-package:v1",
+  "title": "Signed contract package v1 (draft: TV2 and TV3 write it, TV4 approves, by 28/11)",
+  "description": "The immutable snapshot execution receives in contract.activated. The only contract between contract/signing and execution. Money is a string of whole VND.",
+  "type": "object",
+  "required": [
+    "schema",
+    "contract",
+    "parties",
+    "milestones",
+    "members",
+    "document",
+    "signatures",
+    "ruleSet"
+  ],
+  "properties": {
+    "schema": { "const": "SCW_CONTRACT_PACKAGE_V1" },
+    "contract": {
+      "type": "object",
+      "required": [
+        "id",
+        "code",
+        "title",
+        "type",
+        "valueVnd",
+        "start",
+        "end",
+        "approvalPolicy"
+      ],
+      "properties": {
+        "id": { "type": "string" },
+        "code": { "type": "string" },
+        "title": { "type": "string" },
+        "type": {
+          "type": "string",
+          "examples": ["GOODS", "SERVICE", "SOFTWARE", "MAINTENANCE"]
+        },
+        "valueVnd": { "type": "string", "pattern": "^[0-9]+$" },
+        "start": { "type": "string", "format": "date" },
+        "end": { "type": "string", "format": "date" },
+        "approvalPolicy": { "type": "string" },
+        "legalProfile": {
+          "type": "string",
+          "description": "e.g. COMMERCIAL (penalty cap 8%)"
+        }
+      }
+    },
+    "parties": {
+      "type": "object",
+      "required": ["buyer", "supplier"],
+      "properties": {
+        "buyer": { "$ref": "#/$defs/party" },
+        "supplier": { "$ref": "#/$defs/party" }
+      }
+    },
+    "milestones": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "sequence",
+          "type",
+          "due",
+          "percent",
+          "plannedVnd",
+          "requiredEvents",
+          "approvalRoles"
+        ],
+        "properties": {
+          "sequence": { "type": "integer", "minimum": 1 },
+          "type": { "type": "string" },
+          "due": { "type": "string", "format": "date" },
+          "percent": {
+            "type": "string",
+            "pattern": "^[0-9]+(\\.[0-9]{1,2})?$"
+          },
+          "plannedVnd": { "type": "string", "pattern": "^[0-9]+$" },
+          "requiredEvents": { "type": "array", "items": { "type": "string" } },
+          "approvalRoles": { "type": "array", "items": { "type": "string" } },
+          "graceDays": { "type": "integer", "minimum": 0 },
+          "penaltyRatePct": { "type": "string" },
+          "maxPenaltyPct": { "type": "string" },
+          "latePenalty": { "type": "boolean" }
+        }
+      }
+    },
+    "members": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["userId", "side", "duty"],
+        "properties": {
+          "userId": { "type": "string" },
+          "side": { "enum": ["BUYER", "SUPPLIER"] },
+          "duty": {
+            "type": "string",
+            "examples": ["EXECUTOR", "APPROVER", "REPRESENTATIVE"]
+          },
+          "milestones": { "type": "array", "items": { "type": "integer" } },
+          "eventTypes": { "type": "array", "items": { "type": "string" } }
+        }
+      }
+    },
+    "document": {
+      "type": "object",
+      "required": ["id", "sha256", "sealedAt"],
+      "properties": {
+        "id": { "type": "string" },
+        "sha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "sealedAt": { "type": "string", "format": "date-time" }
+      }
+    },
+    "signatures": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["step", "signerId", "signedAt", "level"],
+        "properties": {
+          "step": { "type": "integer" },
+          "signerId": { "type": "string" },
+          "signedAt": { "type": "string", "format": "date-time" },
+          "level": { "enum": ["SIMULATED", "DIGITAL"] }
+        }
+      }
+    },
+    "ruleSet": {
+      "type": "object",
+      "required": ["id", "version"],
+      "properties": {
+        "id": { "type": "string" },
+        "version": { "type": "string" },
+        "sha256": { "type": "string" }
+      }
+    }
+  },
+  "$defs": {
+    "party": {
+      "type": "object",
+      "required": ["id", "name"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "organizations.id of identity"
+        },
+        "name": { "type": "string" },
+        "taxCode": { "type": "string" },
+        "approvalLimitVnd": { "type": "string" }
+      }
+    }
+  }
+}

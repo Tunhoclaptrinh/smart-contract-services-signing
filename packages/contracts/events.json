@@ -1,0 +1,114 @@
+{
+  "$comment": "Event catalogue (draft). Producer, consumers, the data each type carries, the consumer's idempotency key. Add a type here in the PR that first publishes it; audit stores every type.",
+  "events": [
+    {
+      "type": "contract.review_requested",
+      "producer": "contract",
+      "consumers": ["audit"],
+      "data": ["contractId", "partyId"]
+    },
+    {
+      "type": "contract.agreed",
+      "producer": "contract",
+      "consumers": ["audit"],
+      "data": ["contractId"]
+    },
+    {
+      "type": "signing.step_ready",
+      "producer": "signing",
+      "consumers": ["audit"],
+      "data": ["sessionId", "step", "signerId"]
+    },
+    {
+      "type": "contract.activated",
+      "producer": "signing",
+      "consumers": ["execution", "audit"],
+      "data": ["package (schemas/contract-package.v1.json)"]
+    },
+    {
+      "type": "verification.requested",
+      "producer": "execution",
+      "consumers": ["signing"],
+      "data": ["evidenceId", "documentId", "kind"]
+    },
+    {
+      "type": "evidence.verified",
+      "producer": "signing",
+      "consumers": ["execution", "audit"],
+      "data": ["evidenceId", "verificationId"]
+    },
+    {
+      "type": "evidence.rejected",
+      "producer": "signing",
+      "consumers": ["execution", "audit"],
+      "data": ["evidenceId", "verificationId", "reason"]
+    },
+    {
+      "type": "evidence.submitted",
+      "producer": "execution",
+      "consumers": ["audit"],
+      "data": ["milestoneId", "evidenceId", "eventType"]
+    },
+    {
+      "type": "approval.recorded",
+      "producer": "execution",
+      "consumers": ["audit"],
+      "data": ["milestoneId", "role"]
+    },
+    {
+      "type": "dispute.opened",
+      "producer": "execution",
+      "consumers": ["audit"],
+      "data": ["milestoneId", "disputeId"]
+    },
+    {
+      "type": "dispute.resolved",
+      "producer": "execution",
+      "consumers": ["audit"],
+      "data": ["milestoneId", "disputeId"]
+    },
+    {
+      "type": "decision.made",
+      "producer": "decision",
+      "consumers": ["execution", "audit"],
+      "data": [
+        "milestoneId",
+        "evaluationId",
+        "decision",
+        "payableVnd",
+        "penaltyVnd",
+        "ruleSetVersion"
+      ]
+    },
+    {
+      "type": "rule_set.published",
+      "producer": "decision",
+      "consumers": ["execution"],
+      "data": ["ruleSetId", "version"]
+    },
+    {
+      "type": "payment.order_created",
+      "producer": "payment",
+      "consumers": ["audit"],
+      "data": ["orderId", "milestoneId", "amountVnd"]
+    },
+    {
+      "type": "payment.settled",
+      "producer": "payment",
+      "consumers": ["execution", "audit"],
+      "data": ["orderId", "milestoneId", "amountVnd"]
+    },
+    {
+      "type": "payment.failed",
+      "producer": "payment",
+      "consumers": ["execution", "audit"],
+      "data": ["orderId", "milestoneId", "reason"]
+    },
+    {
+      "type": "audit.entry",
+      "producer": "every service (outbox)",
+      "consumers": ["audit"],
+      "data": ["the audit record written with the change"]
+    }
+  ]
+}

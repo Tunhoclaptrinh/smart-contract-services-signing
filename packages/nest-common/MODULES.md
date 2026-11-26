@@ -16,6 +16,9 @@ gốc.
 | `audit-http.ts` | Ghi nhật ký lượt xem có chủ đích một bản ghi, tài liệu (không ghi lượt tải lại danh sách) | tự gắn |
 | `health.controller.ts` | `GET /health`: sẵn sàng, gồm một lượt hỏi kho dữ liệu (`repo.ping()`); kho hỏng thì 503 `STORAGE_UNAVAILABLE` | thêm vào module service |
 | `service-client.ts` | Gọi service khác (MS-R5): timeout (mặc định 3 s), chỉ thử lại lỗi hạ tầng với method idempotent (backoff 100, 200 ms…), 4xx của đích trả nguyên, 5xx → 502 `UPSTREAM_ERROR`, không tới được → 503 `UPSTREAM_UNAVAILABLE`, chậm → 504 `UPSTREAM_TIMEOUT`; chuyển tiếp token và `x-request-id`; địa chỉ từ `<TÊN>_URL` | `ServiceClient.fromEnv("contract").get("/contracts/1", { token })` |
+| `service-client.ts` (bảo vệ) | `breaker: { failures, windowMs, openMs }`: lỗi hạ tầng liên tiếp thì mở mạch, trả nhanh 503 `UPSTREAM_CIRCUIT_OPEN`, sau đó thử một lời gọi (half-open); 4xx không tính là lỗi. `maxConcurrent`: quá số lời gọi đồng thời thì 503 `UPSTREAM_BUSY` | `new ServiceClient("bank", url, { breaker: { failures: 5 }, maxConcurrent: 5 })` |
+| `idempotency.ts` | `@Idempotent()` trên route: cần header `Idempotency-Key`; lặp lại cùng khoá, cùng body thì trả lại kết quả cũ (`Idempotent-Replayed: true`), khác body 422 `IDEMPOTENCY_KEY_REUSED`, đang chạy 409 `IDEMPOTENCY_IN_PROGRESS`; lỗi thì nhả khoá; giữ 24 giờ (collection `idempotency-keys`). `IdempotencyStore.run()` để dùng ngoài route | `@Post() @Idempotent() create(...)` |
+| `events.ts` | Phong bì sự kiện v1 (`newEvent`, `isEventEnvelope`), kiểu `ContractPackageV1`; hợp đồng ở `packages/contracts/schemas/*.json`, danh mục `packages/contracts/events.json` (bản nháp, chốt 28/11) | `newEvent({ type: "evidence.submitted", source: "execution", subject, data })` |
 
 ## Xác thực và quyền
 
@@ -109,4 +112,4 @@ Toán tử theo kiểu: chuỗi `eq ne in nin contains startsWith isNull`; số 
 ## Test
 
 `packages/nest-common/test/*.test.mjs` (chạy trên `dist`, `pnpm test`): `problem`, `list-engine`,
-`import`, `export`, `auth-token`, `service-client`; `postgres.test.mjs` chạy khi có `DATABASE_URL`.
+`import`, `export`, `auth-token`, `service-client`, `idempotency`, `events`; `postgres.test.mjs` chạy khi có `DATABASE_URL`.

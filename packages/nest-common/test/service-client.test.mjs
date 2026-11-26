@@ -2,7 +2,7 @@
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
-import { ServiceClient, auditContext } from "../dist/index.js";
+import { CircuitBreaker, ServiceClient, auditContext } from "../dist/index.js";
 
 let server, base;
 const seen = [];
@@ -87,4 +87,57 @@ test("slow targets give 504, unreachable ones 503, missing config 503", async ()
     (e) =>
       e.getStatus() === 503 && e.message === "UPSTREAM_NOT_CONFIGURED:nowhere",
   );
+});
+
+test("the circuit opens after repeated infrastructure failures and fails fast", async () => {
+  const client = new ServiceClient("bank", "http://127.0.0.1:1", {
+    retries: 0,
+    breaker: { failures: 2, windowMs: 10_000, openMs: 200 },
+  });
+  for (let i = 0; i < 2; i++)
+    await assert.rejects(
+      client.get("/x"),
+      (e) => e.message === "UPSTREAM_UNAVAILABLE:bank",
+    );
+  assert.equal(client.breaker.state, "open");
+  const started = Date.now();
+  await assert.rejects(
+    client.get("/x"),
+    (e) => e.message === "UPSTREAM_CIRCUIT_OPEN:bank",
+  );
+  assert.ok(Date.now() - started < 50, "fails fast without calling");
+  await new Promise((done) => setTimeout(done, 220));
+  assert.equal(client.breaker.state, "half-open");
+});
+
+test("business answers do not open the circuit; a good trial closes it", async () => {
+  const breaker = new CircuitBreaker(1, 10_000, 50);
+  breaker.failure();
+  assert.equal(breaker.state, "open");
+  await new Promise((done) => setTimeout(done, 60));
+  assert.equal(breaker.allow(), true);
+  assert.equal(breaker.allow(), false, "one trial at a time");
+  breaker.success();
+  assert.equal(breaker.state, "closed");
+  const client = new ServiceClient("demo", base, {
+    breaker: { failures: 1 },
+    retries: 0,
+  });
+  await assert.rejects(client.get("/conflict"), (e) => e.getStatus() === 409);
+  assert.equal(client.breaker.state, "closed");
+});
+
+test("the bulkhead refuses calls beyond the limit instead of queueing", async () => {
+  const client = new ServiceClient("demo", base, {
+    maxConcurrent: 1,
+    timeoutMs: 1000,
+    retries: 0,
+  });
+  const slow = client.get("/slow");
+  await assert.rejects(
+    client.get("/ok"),
+    (e) => e.getStatus() === 503 && e.message === "UPSTREAM_BUSY:demo",
+  );
+  await slow;
+  assert.deepEqual(await client.get("/ok"), { n: 1 });
 });

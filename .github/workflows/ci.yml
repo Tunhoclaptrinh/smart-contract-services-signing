@@ -89,10 +89,12 @@ jobs:
       - id: has
         run: test -f btl-backend/compose.yaml && echo "compose=true" >> "$GITHUB_OUTPUT" || true
       - if: steps.has.outputs.compose == 'true'
-        uses: actions/checkout@v4
-        with:
-          repository: Tunhoclaptrinh/smart-contract-services-identity
-          path: btl-backend-identity
+        name: Check out every service repository compose.yaml builds
+        working-directory: btl-backend
+        run: |
+          for dir in $(grep -oE 'context: \.\./btl-backend-[a-z-]+' compose.yaml | sed 's#context: \.\./##' | sort -u); do
+            git clone --depth 1 "https://github.com/Tunhoclaptrinh/smart-contract-services-${dir#btl-backend-}.git" "../${dir}"
+          done
       - if: steps.has.outputs.compose == 'true'
         name: docker compose up
         working-directory: btl-backend

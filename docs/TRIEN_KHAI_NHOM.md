@@ -78,8 +78,8 @@ Làm theo thứ tự; mỗi dòng có cách kiểm.
 2. `gateway/routes.json`: tiền tố của service, route công khai nếu có.
 3. `postman/`: request của service.
 4. `docs/HE_THONG.md` §1: đổi trạng thái thành "chạy được".
-5. Job CI `stack` của repo cha xanh (CI checkout repo service cạnh repo cha: thêm một bước checkout
-   cho repo mới trong `.github/workflows/ci.yml`, việc của TV1).
+5. Job CI `stack` của repo cha xanh (CI tự clone mọi repo service mà `compose.yaml` build, không cần
+   sửa CI).
 
 ## 5. Ba ngày đầu của từng người
 
