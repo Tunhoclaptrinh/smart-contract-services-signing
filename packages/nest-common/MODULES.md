@@ -19,6 +19,8 @@ gốc.
 | `service-client.ts` (bảo vệ) | `breaker: { failures, windowMs, openMs }`: lỗi hạ tầng liên tiếp thì mở mạch, trả nhanh 503 `UPSTREAM_CIRCUIT_OPEN`, sau đó thử một lời gọi (half-open); 4xx không tính là lỗi. `maxConcurrent`: quá số lời gọi đồng thời thì 503 `UPSTREAM_BUSY` | `new ServiceClient("bank", url, { breaker: { failures: 5 }, maxConcurrent: 5 })` |
 | `idempotency.ts` | `@Idempotent()` trên route: cần header `Idempotency-Key`; lặp lại cùng khoá, cùng body thì trả lại kết quả cũ (`Idempotent-Replayed: true`), khác body 422 `IDEMPOTENCY_KEY_REUSED`, đang chạy 409 `IDEMPOTENCY_IN_PROGRESS`; lỗi thì nhả khoá; giữ 24 giờ (collection `idempotency-keys`). `IdempotencyStore.run()` để dùng ngoài route | `@Post() @Idempotent() create(...)` |
 | `events.ts` | Phong bì sự kiện v1 (`newEvent`, `isEventEnvelope`), kiểu `ContractPackageV1`; hợp đồng ở `packages/contracts/schemas/*.json`, danh mục `packages/contracts/events.json` (bản nháp, chốt 28/11) | `newEvent({ type: "evidence.submitted", source: "execution", subject, data })` |
+| `outbox.ts` | Outbox: `enqueue(tables, event)` trong `repo.transact([..., "outbox"], …)` ghi sự kiện cùng giao dịch với dữ liệu; `OutboxRelay` đẩy outbox và mọi mục nhật ký (thành `audit.entry`) lên bus, lỗi thì giữ lại lần sau; tự bật trong `bootstrapService` khi có `BUS_URL` | `enqueue(tables, newEvent({ … }))` |
+| `bus.ts` | Bus sự kiện: `AmqpBus` (RabbitMQ, exchange `scw.events` theo loại sự kiện, mỗi consumer một queue, DLQ `<queue>.dlq`), `MemoryBus` (test); `consume(bus, repo, { queue, types, handle })`: idempotent theo `event.id`, thử lại 3 lần rồi vào DLQ, message hỏng vào DLQ | `consume(bus, repo, { queue: "execution.contracts", types: ["contract.activated"], handle })` |
 
 ## Xác thực và quyền
 
@@ -112,4 +114,4 @@ Toán tử theo kiểu: chuỗi `eq ne in nin contains startsWith isNull`; số 
 ## Test
 
 `packages/nest-common/test/*.test.mjs` (chạy trên `dist`, `pnpm test`): `problem`, `list-engine`,
-`import`, `export`, `auth-token`, `service-client`, `idempotency`, `events`; `postgres.test.mjs` chạy khi có `DATABASE_URL`.
+`import`, `export`, `auth-token`, `service-client`, `idempotency`, `events`, `outbox`; `postgres.test.mjs` chạy khi có `DATABASE_URL`.

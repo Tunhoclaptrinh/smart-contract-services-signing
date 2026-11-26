@@ -87,13 +87,24 @@ export interface AuditChange {
 }
 
 /** Store actual business changes, excluding counters/timestamps and every credential. */
+/**
+ * Infrastructure collections: their writes are delivery bookkeeping, not business changes, so they
+ * do not produce audit entries (and the outbox relay updating its cursor never feeds itself).
+ */
+export const UNAUDITED_COLLECTIONS = new Set([
+  "outbox",
+  "outbox-cursor",
+  "processed-messages",
+  "idempotency-keys",
+]);
+
 export function auditChanges(
   originals: Record<string, RecordEntity[]>,
   tables: Record<string, RecordEntity[]>,
 ): AuditChange[] {
   const changes: AuditChange[] = [];
   for (const [resource, rows] of Object.entries(tables)) {
-    if (resource === "audit") continue;
+    if (resource === "audit" || UNAUDITED_COLLECTIONS.has(resource)) continue;
     const old = new Map((originals[resource] ?? []).map((r) => [r.id, r]));
     const next = new Map(rows.map((r) => [r.id, r]));
     for (const id of new Set([...old.keys(), ...next.keys()])) {

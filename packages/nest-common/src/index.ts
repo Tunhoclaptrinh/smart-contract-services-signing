@@ -9,6 +9,8 @@ export * from "./health.controller";
 export * from "./service-client";
 export * from "./events";
 export * from "./idempotency";
+export * from "./bus";
+export * from "./outbox";
 export * from "./permissions.controller";
 export * from "./repository";
 export * from "./postgres-store";

@@ -21,6 +21,9 @@ import { repoRoot } from "./paths";
 import { createValidationPipe } from "./problem";
 import { Repository } from "./repository";
 import { BaseService } from "./services/base.service";
+import { createBus } from "./bus";
+import { OutboxRelay } from "./outbox";
+import type { ServiceName } from "./events";
 
 export interface ServiceOptions {
   /** The service's root module; it must provide Repository and BaseService. */
@@ -105,6 +108,20 @@ export async function bootstrapService(options: ServiceOptions) {
         .build(),
     ),
   );
+  // Outbox relay: on when BUS_URL is set (OUTBOX_RELAY=false turns it off).
+  if (process.env.BUS_URL && process.env.OUTBOX_RELAY !== "false") {
+    const bus = createBus();
+    const relay = new OutboxRelay(
+      app.get(Repository),
+      bus,
+      options.name as ServiceName,
+    );
+    relay.start();
+    process.once("SIGTERM", () => {
+      relay.stop();
+      void bus.close();
+    });
+  }
   app.enableShutdownHooks();
   // Cloud PaaS (Render, Koyeb, Railway, Cloud Run) supply PORT and expect 0.0.0.0.
   const port = Number(

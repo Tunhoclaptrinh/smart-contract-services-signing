@@ -100,11 +100,31 @@ jobs:
         working-directory: btl-backend
         run: docker compose up --build --wait --wait-timeout 240
       - if: steps.has.outputs.compose == 'true'
+        name: Listen on the event bus (a test queue bound to every event)
+        run: |
+          api=http://127.0.0.1:15672/api; auth=scw:scw-dev
+          curl -sf -u $auth -X PUT -H 'content-type: application/json' $api/exchanges/%2F/scw.events -d '{"type":"topic","durable":true}'
+          curl -sf -u $auth -X PUT -H 'content-type: application/json' $api/queues/%2F/ci.events -d '{"durable":false}'
+          curl -sf -u $auth -X POST -H 'content-type: application/json' $api/bindings/%2F/e/scw.events/q/ci.events -d '{"routing_key":"#"}'
+      - if: steps.has.outputs.compose == 'true'
         name: Postman collection (Newman)
         working-directory: btl-backend
         run: >
           npx --yes newman@6 run postman/smart-contract.postman_collection.json
           -e postman/local.postman_environment.json --reporters cli
+      - if: steps.has.outputs.compose == 'true'
+        name: Events left the services through the outbox (sign-ins reached the bus)
+        run: |
+          sleep 5
+          curl -sf -u scw:scw-dev -X POST -H 'content-type: application/json' \
+            http://127.0.0.1:15672/api/queues/%2F/ci.events/get \
+            -d '{"count":500,"ackmode":"ack_requeue_true","encoding":"auto"}' > events.json
+          node -e '
+            const m = JSON.parse(require("fs").readFileSync("events.json", "utf8"));
+            const events = m.map((x) => JSON.parse(x.payload));
+            const logins = events.filter((e) => e.type === "audit.entry" && e.source === "identity" && e.data.action === "LOGIN");
+            console.log(`${events.length} events on the bus, ${logins.length} sign-ins from identity`);
+            if (!logins.length) process.exit(1);'
       - if: failure() && steps.has.outputs.compose == 'true'
         working-directory: btl-backend
         run: docker compose logs --no-color | tail -200
