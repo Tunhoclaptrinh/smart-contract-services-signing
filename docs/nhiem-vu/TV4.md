@@ -46,6 +46,10 @@ chấm lại mốc; ai cũng thấy "việc còn lại" của mình.
 | Tài liệu | `../codecash/docs/33_LUONG_NGHIEP_VU_DAU_CUOI.md` | câu chuyện đầu–cuối |
 | Ảnh | `../codecash/apps/web/public/guide/images` | `tasks*`, `contract-detail*`, `evidence*`, `approval*`, `dispute*`, `exception*`, `amendment-*`, `liquidation-review` |
 
+## Phần nền có sẵn cho bạn
+
+`consume()` để nhận `contract.activated`, `evidence.verified`, `payment.settled`; `enqueue()` để phát sự kiện; `ServiceClient` gọi decision (`MODULES.md`). Repo của bạn đã có trên GitHub, CI xanh, `SERVICE.md` điền sẵn thông tin và endpoint dự kiến.
+
 ## Việc theo thứ tự
 
 | # | Việc | Xong khi |

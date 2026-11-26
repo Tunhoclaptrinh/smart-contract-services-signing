@@ -43,6 +43,10 @@ tài khoản.
 | Tài liệu | `../codecash/docs/NGHIEP_VU.md` | §11 ký số và tài liệu |
 | Ảnh | `../codecash/apps/web/public/guide/images` | `signing-*`, `sign-*`, `verify`, `review-signature-*` |
 
+## Phần nền có sẵn cho bạn
+
+`@Idempotent()` cho lượt ký, `ServiceClient` có `breaker` cho nhà ký mô phỏng, `enqueue()` để phát `contract.activated` (`MODULES.md`). Repo của bạn đã có trên GitHub, CI xanh, `SERVICE.md` điền sẵn thông tin và endpoint dự kiến.
+
 ## Việc theo thứ tự
 
 | # | Việc | Xong khi |

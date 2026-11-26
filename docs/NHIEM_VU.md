@@ -15,8 +15,10 @@ soạn hợp đồng → rà soát → ký → nộp chứng từ, hoá đơn �
 ```
 
 Hệ gồm 6 service nghiệp vụ, identity (đăng nhập) và gateway (một cửa vào), mỗi service một repo và một
-database. Web là một repo riêng. Phần dùng chung (chassis, gateway, identity, compose, CI, đăng nhập
-trên web) **đã xong**: bạn bắt đầu từ nghiệp vụ.
+database. Web là một repo riêng. Phần dùng chung **đã xong**: chassis (lỗi chuẩn, DTO, gọi service có
+timeout và circuit breaker, idempotency, outbox, hàng đợi RabbitMQ), gateway, identity, compose chạy đủ
+7 service, CI, đăng nhập và quản trị trên web; **repo của từng service đã tạo sẵn**, có khung chạy
+được. Bạn bắt đầu thẳng từ nghiệp vụ.
 
 ## 2. Ai làm gì
 

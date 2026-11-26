@@ -40,6 +40,10 @@
 | Tài liệu | `../codecash/docs/NGHIEP_VU.md` | §4 vòng đời, §6.2a, §6.3, §14.4 |
 | Ảnh | `../codecash/apps/web/public/guide/images` | `upload-*`, `review-*`, `admin-contract-templates`, `admin-template-editor` |
 
+## Phần nền có sẵn cho bạn
+
+`enqueue()` để phát `contract.review_requested`, `contract.agreed`; bản nháp gói hợp đồng ở `packages/contracts/schemas/contract-package.v1.json` (`MODULES.md`). Repo của bạn đã có trên GitHub, CI xanh, `SERVICE.md` điền sẵn thông tin và endpoint dự kiến.
+
 ## Việc theo thứ tự
 
 | # | Việc | Xong khi |

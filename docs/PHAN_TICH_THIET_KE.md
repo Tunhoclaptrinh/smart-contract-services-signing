@@ -289,16 +289,16 @@ Chạy trước (tắt cơ chế bằng `RESILIENCE_ENABLED=false`) và sau, cù
 | Mã | Đáp ứng ở | Chủ | Trạng thái |
 | --- | --- | --- | --- |
 | MS-R1 ≥ 5 quy tắc | §4 (27 quy tắc), test vi phạm từng service | TV2 gom | 2/27 có test |
-| MS-R2 chia service, database riêng | §3, `compose.yaml`, `infra/postgres-init.sql` | TV1 | **xong** khung; thêm service khi có |
+| MS-R2 chia service, database riêng | §3, `compose.yaml`, `infra/postgres-init.sql` | TV1 | **xong**: 6 repo + 6 database, chạy chung trong compose |
 | MS-R3 ≥ 4 endpoint REST, lỗi 4xx, OpenAPI | §6, `service/openapi.yaml` từng repo | chủ service | identity **xong** |
 | MS-R4 gateway duy nhất | `gateway/` | TV1 | **xong** |
-| MS-R5 timeout, retry, 503/504, health, `*_URL` | `ServiceClient`, `/health`, `.env.example`, §7 | TV1 (thư viện), chủ service dùng | **xong** thư viện |
+| MS-R5 timeout, retry, 503/504, health, `*_URL` | `ServiceClient`, `/health`, `.env.example`, §7 | TV1 (thư viện), chủ service dùng | **xong** thư viện (timeout, thử lại, circuit breaker, bulkhead) |
 | MS-R6 saga, PENDING | §8 S1–S4 | TV3, TV4, TV5 | chưa |
-| MS-R7 Docker, `docker compose up` | `compose.yaml`, job CI `stack` | TV1 | **xong** cho identity + gateway |
+| MS-R7 Docker, `docker compose up` | `compose.yaml`, job CI `stack` | TV1 | **xong**: 7 service + gateway + RabbitMQ |
 | MS-R8 Postman ≥ 10, ≥ 2 thí nghiệm lỗi | `postman/` (25 request identity), §9 | mỗi người ≥ 5 request; TV6 thí nghiệm | identity **xong** |
-| MS-B1 hàng đợi, consumer idempotent, DLQ | audit consumer, outbox | TV6 | chưa |
+| MS-B1 hàng đợi, consumer idempotent, DLQ | audit consumer, outbox | TV1 (hạ tầng), TV6 (consumer của audit) | hạ tầng **xong** (outbox, RabbitMQ, `consume()` idempotent, DLQ); consumer audit chưa |
 | MS-B2 JWT ở gateway | RS256 + JWKS | TV1 | **xong** |
-| MS-B3 circuit breaker / bulkhead | payment → ngân hàng, signing → nhà cung cấp | TV5, TV3 | chưa |
+| MS-B3 circuit breaker / bulkhead | payment → ngân hàng, signing → nhà cung cấp | TV5, TV3 | thư viện **xong** (`ServiceClient`), áp vào lời gọi chưa |
 | MS-B4 CI test tự động | CI mỗi repo + job `stack` chạy compose và Newman | TV1 | **xong** |
 
 ### 10.2. Lập trình Web nâng cao

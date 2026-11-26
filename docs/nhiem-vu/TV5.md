@@ -47,6 +47,10 @@ luật; lệnh chi chỉ tạo từ quyết định trả tiền, không bao gi�
 | Tài liệu | `../codecash/docs/pitch/GIAI_THICH_SO_LIEU_PITCH.md` | số liệu độ đúng của engine (cho chương đánh giá) |
 | Ảnh | `../codecash/apps/web/public/guide/images` | `decision*`, `rules-*`, `transfer`, `data*` |
 
+## Phần nền có sẵn cho bạn
+
+`@Idempotent()` cho `POST /payment-orders`, `ServiceClient` có `breaker` + `maxConcurrent` quanh ngân hàng (`MODULES.md`); repo decision đã có khung (đọc `CLAUDE.md` của repo đó). Repo của bạn đã có trên GitHub, CI xanh, `SERVICE.md` điền sẵn thông tin và endpoint dự kiến.
+
 ## Việc theo thứ tự
 
 | # | Việc | Xong khi |

@@ -13,12 +13,12 @@ token → sửa tệp này trong cùng commit/PR (bảng mục 1, sơ đồ mụ
 | --- | --- | --- | --- | --- | --- | --- |
 | gateway | repo cha, nhánh `main`, `gateway/` | 3000 | — | TV1 | — (chỉ định tuyến, kiểm JWT lớp 1) | **chạy được**, 5 test (`gateway/README.md`) |
 | identity | `smart-contract-services-identity` | 3001 | `identity` | TV1 | organizations, users, settings, refresh-tokens, one-time-tokens, mail-outbox | **chạy được**, 34 test, 18 endpoint |
-| contract | `smart-contract-services-contract` | 3002 | `contract` | TV2 | contract-drafts, contract-templates, milestone-templates, rule-versions, extraction-proposals | chưa có |
-| signing | `smart-contract-services-signing` | 3004 | `signing` | TV3 | documents, signing, signing-requests, signing-profiles, attachments | chưa có |
-| execution | `smart-contract-services-execution` | 3005 | `execution` | TV4 | parties, contracts, milestones, events, status-history, acceptance-requests, amendments, exceptions, notes | chưa có |
-| decision (engine thay được; hiện Python) | `smart-contract-services-decision` | 3006 | `decision` | TV5 | evaluations, engine-runs, payment-rules | chưa có |
-| payment | `smart-contract-services-payment` | 3007 | `payment` | TV5 | payments | chưa có |
-| audit | `smart-contract-services-audit` | 3008 | `audit` | TV6 | audit (tập trung), anchor-jobs, notifications | chưa có |
+| contract | `smart-contract-services-contract` | 3002 | `contract` | TV2 | contract-drafts, contract-templates, milestone-templates, rule-versions, extraction-proposals | khung chạy được (repo, CI, compose, gateway); chưa có nghiệp vụ |
+| signing | `smart-contract-services-signing` | 3004 | `signing` | TV3 | documents, signing, signing-requests, signing-profiles, attachments | khung chạy được (repo, CI, compose, gateway); chưa có nghiệp vụ |
+| execution | `smart-contract-services-execution` | 3005 | `execution` | TV4 | parties, contracts, milestones, events, status-history, acceptance-requests, amendments, exceptions, notes | khung chạy được (repo, CI, compose, gateway); chưa có nghiệp vụ |
+| decision (engine thay được; hiện Python) | `smart-contract-services-decision` | 3006 | `decision` | TV5 | evaluations, engine-runs, payment-rules | khung Python chạy được; chưa có engine |
+| payment | `smart-contract-services-payment` | 3007 | `payment` | TV5 | payments | khung chạy được (repo, CI, compose, gateway); chưa có nghiệp vụ |
+| audit | `smart-contract-services-audit` | 3008 | `audit` | TV6 | audit (tập trung), anchor-jobs, notifications | khung chạy được (repo, CI, compose, gateway); chưa có nghiệp vụ |
 
 Mỗi service: một ứng dụng NestJS (decision: Python), một Dockerfile, **một database riêng** với
 tài khoản riêng (`infra/postgres-init.sql`, không kết nối chéo được). **Không
@@ -114,7 +114,7 @@ là từ điển trạng thái); câu chuyện đầu–cuối: `../codecash/doc
 Các repo để cạnh nhau (`CLAUDE.md` mục 1), trong `btl-backend` (nhánh `main`):
 
 ```bash
-docker compose up --build --wait        # Postgres + identity + gateway; chỉ gateway mở cổng 3000
+docker compose up --build --wait        # Postgres, RabbitMQ, 7 service, gateway; chỉ gateway mở cổng 3000 (RabbitMQ UI: 15672)
 npx newman run postman/smart-contract.postman_collection.json -e postman/local.postman_environment.json
 ```
 

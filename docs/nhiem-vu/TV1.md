@@ -5,7 +5,7 @@
 | Repo | `smart-contract-services` (repo cha: chassis, gateway, `compose.yaml`, Postman, CI), `smart-contract-services-identity`; phần nền của web |
 | Màn web | đăng nhập, đăng ký, quên/đặt lại/đổi mật khẩu, mời thành viên, quản trị (`platform`) |
 | Quy tắc bạn giữ | BR-I01, I02 |
-| Đã xong | chassis, identity (18 endpoint, 34 test), gateway, compose, Postman 25 request, CI job `stack`, xác thực trên web |
+| Đã xong | chassis (cả circuit breaker, idempotency, outbox, bus), identity (18 endpoint, 34 test), gateway (đủ route), compose đủ 7 service + RabbitMQ, 6 repo service có khung và CI, Postman 25 request, CI `stack` có kiểm bus, xác thực và quản trị trên web |
 | Duyệt chéo | TV6 |
 
 **Mục tiêu**: giữ phần nền chạy, gỡ vướng cho mọi người trong ngày, nối từng service vào hệ chung, giữ
@@ -32,12 +32,12 @@ lịch và phạm vi.
 
 | # | Việc | Xong khi |
 | --- | --- | --- |
-| 1 | Ngày 0 (`TRIEN_KHAI_NHOM.md` §2): thêm quyền repo, tạo 5 repo NestJS + repo Python, điền "Thông tin" `SERVICE.md`, đổi thương hiệu web | mọi người clone và `pnpm test` xanh |
+| 1 | Ngày 0: **còn** thêm quyền repo cho từng người và điền tên vào `SERVICE.md` (repo, khung, thông tin đã xong 27/11) | mọi người clone và `pnpm test` (decision: `pytest`) xanh |
 | 2 | Họp khởi động (`TRIEN_KHAI_NHOM.md` §3) | mọi người biết việc 3 ngày đầu |
-| 3 | Gói hợp đồng v1 và phong bì sự kiện vào `packages/contracts` (nhận từ TV2, TV3, TV6) | |
-| 4 | Outbox relay trong chassis, RabbitMQ trong compose (cùng TV6) | |
-| 5 | CI repo cha: thêm checkout repo service mới cho job `stack` khi service vào compose | |
-| 6 | Màn quản trị `platform` hoàn thiện | ≥ 5 test |
+| 3 | Chốt bản nháp gói hợp đồng v1 và phong bì sự kiện (`packages/contracts/schemas/`, đã có) với TV2, TV3, TV4, TV6; sửa rồi đồng bộ | mọi người đồng ý, 28/11 |
+| 4 | ~~Outbox relay, RabbitMQ~~ **đã xong 27/11** (`MODULES.md`: `outbox.ts`, `bus.ts`); hỗ trợ TV6 dùng `consume()` | |
+| 5 | ~~CI clone repo service~~ **đã xong**: job `stack` tự đọc `compose.yaml` | |
+| 6 | Màn quản trị `platform`: nút mời thành viên, 6 test (PR `smart-contract-web#5`, chờ duyệt) | ≥ 5 test |
 | 7 | Hằng ngày: họp 9:00, duyệt PR phần nền trong ngày, đồng bộ phần nền sang mọi repo | |
 | 8 | 04/12 ngày tích hợp: dẫn chạy luồng demo | luồng chạy hết |
 | 9 | Báo cáo: chương 2, 5.1–5.2, 6.1, 7; LT b, c, g, h; ghép hai báo cáo | |

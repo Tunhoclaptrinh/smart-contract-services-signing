@@ -7,14 +7,17 @@ theo đúng các bước nào, nhịp họp, theo dõi tiến độ, và cắt g
 **Luật cập nhật**: trưởng nhóm sửa §1 (tình trạng) mỗi tối; ai đổi cách làm chung (§4, §6) thì sửa
 tệp này trong cùng PR với thay đổi đó.
 
-## 1. Tình trạng hôm nay (27/11)
+## 1. Tình trạng hôm nay (27/11, tối)
 
-| Đã xong (dùng được ngay) | Chưa có |
+| Đã xong (dùng được ngay) | Còn chờ |
 | --- | --- |
-| Chassis: lỗi RFC 9457, DTO, lọc/nhập/xuất, `ServiceClient`, token RS256, `/health` có database | repo của contract, signing, execution, decision, payment, audit |
-| identity đầy đủ (18 endpoint, 34 test), gateway, `compose.yaml`, Postman 25 request, CI job `stack` xanh | outbox relay, RabbitMQ, consumer, DLQ (phần nền, TV1 + TV6) |
-| Web: khung, xác thực đầy đủ (đăng nhập, refresh, quên và đặt lại mật khẩu, mời, đổi mật khẩu), 54 test | các màn nghiệp vụ (trừ `platform`) |
-| Tài liệu: hệ thống, thiết kế, luận cứ, định vị, tận dụng, báo cáo, sổ tay này | |
+| **6 repo service** đã tạo, bảo vệ nhánh, CI xanh: contract, signing, execution, payment, audit (NestJS, khung chassis) và decision (Python FastAPI, khung cùng quy ước: token RS256, problem+json, phong bì, health, Dockerfile, CI) | thêm quyền Write cho từng người (chờ tên GitHub) |
+| `SERVICE.md` mỗi repo đã điền chủ (theo số TV), cổng, database, tiền tố gateway, dữ liệu và endpoint dự kiến | điền tên người khi chốt số |
+| Chassis: lỗi RFC 9457, DTO, lọc/nhập/xuất, `ServiceClient` có timeout, thử lại, **circuit breaker, bulkhead**; `@Idempotent()`; token RS256; **outbox relay, bus RabbitMQ, `consume()` idempotent có DLQ**; phong bì sự kiện `newEvent()` | — |
+| `compose.yaml` chạy **đủ 7 service + gateway + RabbitMQ**, mỗi service một database; `gateway/routes.json` đủ tiền tố; CI `stack` tự clone mọi repo, Newman 25 request xanh, kiểm sự kiện tới được RabbitMQ | — |
+| Bản nháp hợp đồng chung: `packages/contracts/schemas/contract-package.v1.json`, `event-envelope.v1.json`, danh mục `events.json` | chủ service chốt nội dung trước 28/11 |
+| identity đầy đủ (18 endpoint, 34 test); web: khung, xác thực đầy đủ, quản trị (nút mời thành viên, test màn quản trị), 60 test, độ phủ 73% | PR web `smart-contract-web#5` chờ duyệt |
+| Tài liệu: nhiệm vụ, thẻ từng người kèm đường dẫn mã cũ, hệ thống, thiết kế, luận cứ, định vị, tận dụng, báo cáo | — |
 
 ## 2. Ngày 0: trưởng nhóm (hôm nay)
 
@@ -22,12 +25,12 @@ Làm theo thứ tự; mỗi dòng có cách kiểm.
 
 | # | Việc | Cách làm | Xong khi |
 | --- | --- | --- | --- |
-| 1 | Gom tài khoản GitHub của 5 người | | có đủ tên |
-| 2 | Thêm người vào 3 repo đang có (repo cha, identity, web) quyền Write | `gh api -X PUT repos/Tunhoclaptrinh/<repo>/collaborators/<tên> -f permission=push` | mọi người clone được |
-| 3 | Tạo 5 repo service NestJS | trong `btl-backend`: `scripts/new-service.sh <tên>` cho contract, signing, execution, payment, audit; `gh repo create Tunhoclaptrinh/smart-contract-services-<tên> --public`; push; `scripts/protect-branches.sh Tunhoclaptrinh/smart-contract-services-<tên>` | CI mỗi repo xanh |
-| 4 | Tạo repo decision (Python) | repo trống: FastAPI, `pyproject.toml`, `Dockerfile`, CI chạy `pytest`; chép `codecash/apps/engine` và `tests/*.py` theo mức GIỮ | `pytest` xanh trên CI |
-| 5 | Điền "Thông tin" trong `SERVICE.md` từng repo | chủ, cổng, database, tiền tố gateway (`HE_THONG.md` §1) | |
-| 6 | Đổi thương hiệu web sang Smart Contract Workflow (C8) | phần nền web: `brand.*` trong `locales`, `BrandMark`, tiêu đề | không còn chữ "CodeCash" trên giao diện |
+| 1 | Gom tài khoản GitHub và số TV của 5 người | tin nhắn nhóm | có đủ tên |
+| 2 | Thêm người vào repo cha, identity, web và repo service của họ, quyền Write | `gh api -X PUT repos/Tunhoclaptrinh/<repo>/collaborators/<tên> -f permission=push` | mọi người clone được |
+| 3 | ~~Tạo 5 repo service NestJS~~ | **đã xong 27/11** | CI xanh |
+| 4 | ~~Tạo repo decision (Python)~~ | **đã xong 27/11** (khung; engine TV5 chuyển) | CI xanh |
+| 5 | Điền "Thông tin" trong `SERVICE.md` từng repo | **đã xong**, còn điền tên người | |
+| 6 | ~~Đổi thương hiệu web~~ | **đã xong** | |
 | 7 | Họp khởi động 45 phút | §3 | mỗi người biết việc ba ngày đầu |
 
 ## 3. Họp khởi động (45 phút)

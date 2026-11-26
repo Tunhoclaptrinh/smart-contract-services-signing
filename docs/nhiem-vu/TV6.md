@@ -38,14 +38,18 @@ sự kiện không mất, message hỏng không chặn hàng đợi; người d�
 | Script | `../codecash/scripts/guide-screenshots.mjs` | chụp màn hình tự động: chuyển sang web |
 | Ảnh | `../codecash/apps/web/public/guide/images` | `integrity`, `activity`, `dashboard*`, `notifications` |
 
+## Phần nền có sẵn cho bạn
+
+Outbox relay, RabbitMQ, `consume()` (idempotent, DLQ), `newEvent()`; CI `stack` đã kiểm sự kiện tới bus. Repo audit đã có, CI xanh.
+
 ## Việc theo thứ tự
 
 | # | Việc | Xong khi |
 | --- | --- | --- |
 | 1 | Bước 1 của `NHIEM_VU.md` §4 | |
-| 2 | Phong bì sự kiện chung (ai, làm gì, tài nguyên, lúc nào, mã băm, `requestId`) cùng nhóm trưởng | mọi người duyệt |
-| 3 | RabbitMQ trong `compose.yaml`; outbox relay trong chassis (cùng nhóm trưởng) | một service phát, audit nhận |
-| 4 | Consumer idempotent (bảng `processed-messages`), thử lại 3 lần, DLQ; `GET /dlq`, `POST /dlq/{id}/replay` | message trùng không ghi hai lần; message hỏng vào DLQ |
+| 2 | Chốt phong bì sự kiện (bản nháp đã có: `packages/contracts/schemas/event-envelope.v1.json`, danh mục `events.json`) cùng nhóm trưởng | mọi người duyệt |
+| 3 | Dùng hạ tầng có sẵn: RabbitMQ đã ở `compose.yaml`, relay tự đẩy mọi mục nhật ký thành `audit.entry` (`MODULES.md`: `outbox.ts`, `bus.ts`) | audit nhận được `audit.entry` của identity |
+| 4 | Consumer của audit bằng `consume(bus, repo, { queue: "audit.all", types: ["#"], handle })` (đã idempotent, thử lại 3 lần, DLQ); thêm `GET /dlq`, `POST /dlq/{id}/replay` | message trùng một mục; message hỏng vào DLQ |
 | 5 | Lưu bản sao nhật ký; `GET /audit-entries`, `GET /audit/verify` (đối chiếu đầu chuỗi băm từng service) | sửa một mục ở bản sao → verify báo sai |
 | 6 | Thông báo trong ứng dụng, email mô phỏng (`GET /notifications`, đánh dấu đã đọc) | |
 | 7 | Màn web nhật ký, toàn vẹn, DLQ, tổng quan (số liệu lấy từ API), thông báo | ≥ 5 test mỗi màn |
